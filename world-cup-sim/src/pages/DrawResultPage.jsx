@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import api from '../api/api';
 import './DrawResultPage.css';
 
 function DrawResultPage() {
@@ -14,13 +13,20 @@ function DrawResultPage() {
     fetchDraw();
   }, [drawId]);
 
-  const fetchDraw = async () => {
+  const fetchDraw = () => {
     try {
-      const response = await api.get(`/draws/${drawId}`);
-      setDraw(response.data);
+      // Fetch draw from localStorage (since backend doesn't have draw endpoints)
+      const existingDraws = JSON.parse(localStorage.getItem('draws') || '[]');
+      const foundDraw = existingDraws.find(d => d.id === drawId);
+      
+      if (foundDraw) {
+        setDraw(foundDraw);
+      } else {
+        setError('Draw not found');
+      }
     } catch (err) {
       setError('Failed to fetch draw. Please try again.');
-      console.error(err);
+      console.error('Fetch draw error:', err);
     } finally {
       setLoading(false);
     }

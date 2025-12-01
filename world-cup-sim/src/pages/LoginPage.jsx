@@ -16,18 +16,30 @@ function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/login', {
+      const response = await api.post('/api/auth/login', {
         username,
         password,
       });
 
-      // Store JWT token
-      localStorage.setItem('jwt', response.data.token);
-      
-      // Navigate to dashboard
-      navigate('/dashboard');
+      // Check if response is successful
+      if (response.data.success && response.data.token) {
+        // Store JWT token
+        localStorage.setItem('jwt', response.data.token);
+        
+        // Optionally store user info
+        if (response.data.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        
+        // Navigate to dashboard
+        navigate('/dashboard');
+      } else {
+        setError('Login failed. Invalid response from server.');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed. Please try again.';
+      setError(errorMessage);
+      console.error('Login error:', err);
     } finally {
       setLoading(false);
     }

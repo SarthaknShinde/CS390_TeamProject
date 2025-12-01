@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/api';
 import './DrawSimulatorPage.css';
 
 // List of qualified teams (you can expand this)
@@ -28,7 +27,7 @@ function DrawSimulatorPage() {
     setGroups(initialGroups);
   }, []);
 
-  const performDraw = async () => {
+  const performDraw = () => {
     if (!drawName.trim()) {
       setError('Please enter a name for this draw');
       return;
@@ -37,19 +36,48 @@ function DrawSimulatorPage() {
     setDrawing(true);
     setError('');
 
-    try {
-      // Call backend API to perform the draw
-      const response = await api.post('/draws/simulate', {
-        name: drawName,
-        teams: QUALIFIED_TEAMS,
-      });
+    // Small delay to show "Drawing..." state
+    setTimeout(() => {
+      try {
+        // Perform draw client-side (shuffle teams and assign to groups)
+        const shuffledTeams = [...QUALIFIED_TEAMS].sort(() => Math.random() - 0.5);
+        const newGroups = {};
+        
+        for (let i = 0; i < 8; i++) {
+          const groupLetter = String.fromCharCode(65 + i); // A-H
+          newGroups[groupLetter] = [];
+          
+          // Assign 4 teams to each group
+          for (let j = 0; j < 4; j++) {
+            const teamIndex = i * 4 + j;
+            if (teamIndex < shuffledTeams.length) {
+              newGroups[groupLetter].push(shuffledTeams[teamIndex]);
+            }
+          }
+        }
 
-      // Navigate to results page with the draw ID
-      navigate(`/draw-result/${response.data.drawId}`);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to simulate draw. Please try again.');
-      setDrawing(false);
-    }
+        // Store draw in localStorage (since backend doesn't have draw endpoints)
+        const drawData = {
+          id: Date.now().toString(),
+          name: drawName,
+          groups: newGroups,
+          teams: QUALIFIED_TEAMS,
+          createdAt: new Date().toISOString(),
+        };
+
+        // Get existing draws or create new array
+        const existingDraws = JSON.parse(localStorage.getItem('draws') || '[]');
+        existingDraws.push(drawData);
+        localStorage.setItem('draws', JSON.stringify(existingDraws));
+
+        // Navigate to results page with the draw ID
+        navigate(`/draw-result/${drawData.id}`);
+      } catch (err) {
+        setError('Failed to simulate draw. Please try again.');
+        console.error('Draw error:', err);
+        setDrawing(false);
+      }
+    }, 500);
   };
 
   return (

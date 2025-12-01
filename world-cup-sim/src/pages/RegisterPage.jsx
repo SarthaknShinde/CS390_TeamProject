@@ -30,19 +30,31 @@ function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/register', {
+      const response = await api.post('/api/auth/register', {
         username,
         email,
         password,
       });
 
-      // Store JWT token
-      localStorage.setItem('jwt', response.data.token);
-      
-      // Navigate to dashboard
-      navigate('/dashboard');
+      // Check if response is successful
+      if (response.data.success && response.data.token) {
+        // Store JWT token
+        localStorage.setItem('jwt', response.data.token);
+        
+        // Optionally store user info
+        if (response.data.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        
+        // Navigate to dashboard
+        navigate('/dashboard');
+      } else {
+        setError('Registration failed. Invalid response from server.');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      const errorMessage = err.response?.data?.message || err.message || 'Registration failed. Please try again.';
+      setError(errorMessage);
+      console.error('Registration error:', err);
     } finally {
       setLoading(false);
     }
