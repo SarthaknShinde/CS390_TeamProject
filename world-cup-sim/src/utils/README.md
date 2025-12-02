@@ -12,7 +12,7 @@ A comprehensive structure for handling all 495 possible combinations of third-pl
    - `generateMatchupsFallback()` - Fallback algorithm when lookup table entry is missing
    - Helper functions for combination generation
 
-2. **`POPULATE_LOOKUP_TABLE.md`** - Detailed instructions on how to populate the lookup table from the PDF
+2. **`parseCSVToLookup.js`** - Script to parse `possibilities.csv` and generate the lookup table
 
 3. **`generateLookupTemplate.js`** - Helper script to generate a template structure
 
@@ -32,14 +32,21 @@ A comprehensive structure for handling all 495 possible combinations of third-pl
 
 ✅ Algorithm structure is complete  
 ✅ Integration with DashboardPage is complete  
-⏳ Lookup table needs to be populated from the PDF
+✅ Lookup table is automatically generated from `possibilities.csv`
 
-## Next Steps
+## How the Lookup Table is Generated
 
-1. Open `third place possibilities.pdf`
-2. For each combination, extract the 16 matchups
-3. Add entries to `MATCHUP_LOOKUP_TABLE` in `knockoutAlgorithm.js`
-4. Test with various combinations to verify correctness
+The lookup table is automatically generated from `possibilities.csv` using the `parseCSVToLookup.js` script:
+
+1. The CSV contains all 495 combinations of advancing third-place teams
+2. Each row shows which 8 groups' third-place teams advance
+3. The script parses the CSV and generates `matchupLookupTable.js`
+4. The knockout algorithm imports and uses this lookup table
+
+To regenerate the lookup table after CSV changes:
+```bash
+node world-cup-sim/src/utils/parseCSVToLookup.js
+```
 
 ## Benefits
 

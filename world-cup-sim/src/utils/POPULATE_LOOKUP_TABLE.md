@@ -1,49 +1,49 @@
-# How to Populate the Knockout Algorithm Lookup Table
+# Knockout Algorithm Lookup Table
 
 ## Overview
 The FIFA 2026 World Cup has 495 possible combinations of which 8 groups' third-place teams advance to the knockout stage. Each combination results in different Round of 32 matchups according to FIFA's official rules.
 
 ## Current Status
-- The algorithm structure is in place in `knockoutAlgorithm.js`
-- The lookup table (`MATCHUP_LOOKUP_TABLE`) is currently empty
-- The system will fall back to a simplified algorithm if a combination is not found
+✅ **The lookup table is automatically generated from `possibilities.csv`**
 
-## Steps to Populate
+The lookup table generation is now fully automated. You no longer need to manually populate entries.
 
-### 1. Open the PDF
-Open `third place possibilities.pdf` in the project root directory.
+## How It Works
 
-### 2. Understand the Format
-For each combination of 8 advancing groups, the PDF shows:
-- Which 8 groups' third-place teams advanced (e.g., A, B, C, D, E, F, G, H)
-- The resulting 16 Round of 32 matchups
+### Automatic Generation
+The lookup table (`matchupLookupTable.js`) is generated from `possibilities.csv` using the `parseCSVToLookup.js` script.
 
-### 3. Add Entries to the Lookup Table
-For each combination in the PDF, add an entry to `MATCHUP_LOOKUP_TABLE` in `knockoutAlgorithm.js`:
+### CSV Format
+The `possibilities.csv` file contains:
+- **Columns 2-13**: Indicate which 8 groups' third-place teams advance (A-L)
+- **Columns 14-21**: Show the resulting matchups for specific group winners vs third-place teams
 
-```javascript
-"ABCDEFGH": [
-  // Match 1
-  { team1: { type: 'winner', group: 'E' }, team2: { type: 'third', group: 'A' } },
-  // Match 2
-  { team1: { type: 'winner', group: 'I' }, team2: { type: 'third', group: 'C' } },
-  // Match 3
-  { team1: { type: 'runner', group: 'A' }, team2: { type: 'runner', group: 'B' } },
-  // ... continue for all 16 matches
-],
+### Regenerating the Lookup Table
+If you update `possibilities.csv`, regenerate the lookup table:
+
+```bash
+node world-cup-sim/src/utils/parseCSVToLookup.js
 ```
 
-### 4. Key Format
+This will:
+1. Parse the CSV file
+2. Extract all 495 combinations
+3. Map the matchups to Round of 32 structure
+4. Generate `matchupLookupTable.js` with all entries
+
+## Lookup Table Structure
+
+### Key Format
 - **Key**: Sorted string of 8 group letters (e.g., "ABCDEFGH")
 - **Value**: Array of exactly 16 matchups
 
-### 5. Team Types
+### Team Types
 - `{ type: 'winner', group: 'X' }` - Winner of Group X
 - `{ type: 'runner', group: 'X' }` - Runner-up of Group X  
 - `{ type: 'third', group: 'X' }` - Third-place team from Group X
 
-### 6. Match Order
-The 16 matchups should be in this order:
+### Match Order
+The 16 matchups are in Round of 32 order:
 1. Match 1 (Left side, top quarter)
 2. Match 2 (Left side, top quarter)
 3. Match 3 (Left side, top quarter)
@@ -61,20 +61,27 @@ The 16 matchups should be in this order:
 15. Match 15 (Right side, bottom quarter)
 16. Match 16 (Right side, bottom quarter)
 
-## Helper Script
-You can use the `getAllCombinationKeys()` function exported from `knockoutAlgorithm.js` to get all 495 possible combination keys. This can help you:
-- Generate a template structure
-- Verify you haven't missed any combinations
-- Create a checklist for data entry
+## Usage
 
-## Testing
-After adding entries:
-1. Test with different combinations of advancing third-place teams
-2. Verify the matchups match the PDF
-3. Check that all 16 matchups are generated correctly
+The lookup table is automatically imported and used by `knockoutAlgorithm.js`:
+
+```javascript
+import MATCHUP_LOOKUP_TABLE_DATA from './matchupLookupTable.js';
+const MATCHUP_LOOKUP_TABLE = MATCHUP_LOOKUP_TABLE_DATA;
+```
+
+If a combination is not found in the lookup table, the algorithm falls back to a simplified priority-based approach.
+
+## Files
+
+- **`possibilities.csv`** - Source data with all 495 combinations
+- **`parseCSVToLookup.js`** - Parser script that generates the lookup table
+- **`matchupLookupTable.js`** - Generated lookup table (auto-generated, do not edit manually)
+- **`knockoutAlgorithm.js`** - Algorithm that uses the lookup table
 
 ## Notes
-- The lookup table can be populated incrementally
-- Missing combinations will use the fallback algorithm
-- Consider automating the data entry if the PDF is in a parseable format
 
+- The lookup table is generated automatically - do not edit `matchupLookupTable.js` manually
+- If you need to update matchups, edit `possibilities.csv` and regenerate
+- The generated file is ~670 KB and contains all 495 combinations
+- Missing combinations will use the fallback algorithm

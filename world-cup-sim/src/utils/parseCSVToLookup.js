@@ -229,10 +229,14 @@ function generateLookupTableCode(lookupTable) {
 }
 
 // Main execution (when run as script)
+// eslint-disable-next-line no-undef
 const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
+                     // eslint-disable-next-line no-undef
                      process.argv[1] && import.meta.url.endsWith(process.argv[1]);
 
+// eslint-disable-next-line no-undef
 if (isMainModule || process.argv[1]?.includes('parseCSVToLookup')) {
+  // eslint-disable-next-line no-undef
   const csvPath = path.join(process.cwd(), 'possibilities.csv');
   console.log('Parsing CSV file:', csvPath);
   
@@ -241,6 +245,7 @@ if (isMainModule || process.argv[1]?.includes('parseCSVToLookup')) {
     console.log(`Generated lookup table with ${Object.keys(lookupTable).length} entries`);
     
     const code = generateLookupTableCode(lookupTable);
+    // eslint-disable-next-line no-undef
     const outputPath = path.join(process.cwd(), 'world-cup-sim/src/utils/matchupLookupTable.js');
     
     fs.writeFileSync(outputPath, code, 'utf-8');
@@ -248,6 +253,7 @@ if (isMainModule || process.argv[1]?.includes('parseCSVToLookup')) {
     console.log('File size:', (code.length / 1024).toFixed(2), 'KB');
   } catch (error) {
     console.error('Error parsing CSV:', error);
+    // eslint-disable-next-line no-undef
     process.exit(1);
   }
 }

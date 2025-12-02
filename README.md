@@ -65,7 +65,7 @@ CS390_TeamProject/
 │   └── README.md                   # Frontend documentation
 │
 ├── template.html                   # HTML template/reference design
-├── third place possibilities.pdf   # Reference document
+├── possibilities.csv                # FIFA 2026 third-place possibilities data
 └── README.md                       # Project documentation (this file)
 ```
 
