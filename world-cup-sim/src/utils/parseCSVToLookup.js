@@ -229,24 +229,43 @@ function generateLookupTableCode(lookupTable) {
 }
 
 // Main execution (when run as script)
+// Check if this file is being run directly (not imported)
 // eslint-disable-next-line no-undef
 const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
                      // eslint-disable-next-line no-undef
-                     process.argv[1] && import.meta.url.endsWith(process.argv[1]);
+                     (process.argv[1] && import.meta.url.endsWith(process.argv[1]));
 
 // eslint-disable-next-line no-undef
-if (isMainModule || process.argv[1]?.includes('parseCSVToLookup')) {
+if (isMainModule || (process.argv[1] && process.argv[1].includes('parseCSVToLookup'))) {
+  // Determine project root: go up from this file's directory to find possibilities.csv
+  // This file is at: world-cup-sim/src/utils/parseCSVToLookup.js
+  // CSV is at: possibilities.csv (project root)
   // eslint-disable-next-line no-undef
-  const csvPath = path.join(process.cwd(), 'possibilities.csv');
+  let projectRoot = process.cwd();
+  
+  // If running from world-cup-sim directory, go up one level
+  if (projectRoot.endsWith('world-cup-sim')) {
+    projectRoot = path.join(projectRoot, '..');
+  }
+  
+  const csvPath = path.join(projectRoot, 'possibilities.csv');
   console.log('Parsing CSV file:', csvPath);
+  
+  // Check if CSV exists
+  if (!fs.existsSync(csvPath)) {
+    console.error(`Error: CSV file not found at ${csvPath}`);
+    console.error('Please run this script from the project root directory.');
+    // eslint-disable-next-line no-undef
+    process.exit(1);
+  }
   
   try {
     const lookupTable = parseCSVToLookupTable(csvPath);
     console.log(`Generated lookup table with ${Object.keys(lookupTable).length} entries`);
     
     const code = generateLookupTableCode(lookupTable);
-    // eslint-disable-next-line no-undef
-    const outputPath = path.join(process.cwd(), 'world-cup-sim/src/utils/matchupLookupTable.js');
+    // Output path: world-cup-sim/src/utils/matchupLookupTable.js
+    const outputPath = path.join(projectRoot, 'world-cup-sim', 'src', 'utils', 'matchupLookupTable.js');
     
     fs.writeFileSync(outputPath, code, 'utf-8');
     console.log('Lookup table written to:', outputPath);
