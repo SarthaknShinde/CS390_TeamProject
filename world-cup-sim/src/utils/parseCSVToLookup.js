@@ -33,19 +33,18 @@ function parseCSVToLookupTable(csvPath) {
   const lookupTable = {};
   
   // Mapping from CSV matchup columns to Round of 32 match indices
-  // Based on analysis of the CSV data pattern:
-  // CSV columns: 1A (empty), 1B, 1D, 1E, 1G, 1I, 1K, 1L
+  // Based on CSV structure:
+  // CSV columns 14-21: 1A vs, 1B vs, 1D vs, 1E vs, 1G vs, 1I vs, 1K vs, 1L vs
   // These map to matches where group winners play third-place teams
-  // The "1A" column is always empty and Match 12 (Winner A) is determined by priority
   const csvMatchMapping = [
-    // Column 0 (1A): Always empty - Match 12 (Winner A) determined by priority rules
-    { csvColIndex: 1, matchIndex: 6, winnerGroup: 'D' },   // 1B vs -> Match 7 (Winner D vs 3rd)
-    { csvColIndex: 2, matchIndex: 0, winnerGroup: 'E' },    // 1D vs -> Match 1 (Winner E vs 3rd)
-    { csvColIndex: 3, matchIndex: 7, winnerGroup: 'G' },   // 1E vs -> Match 8 (Winner G vs 3rd)
-    { csvColIndex: 4, matchIndex: 1, winnerGroup: 'I' },   // 1G vs -> Match 2 (Winner I vs 3rd)
-    { csvColIndex: 5, matchIndex: 15, winnerGroup: 'K' },  // 1I vs -> Match 16 (Winner K vs 3rd)
-    { csvColIndex: 6, matchIndex: 12, winnerGroup: 'L' },  // 1K vs -> Match 13 (Winner L vs 3rd)
-    { csvColIndex: 7, matchIndex: 14, winnerGroup: 'J' },  // 1L vs -> Match 15 (Winner J vs 3rd)
+    { csvColIndex: 0, matchIndex: 11, winnerGroup: 'A' },  // 1A vs -> Match 12 (Winner A vs 3rd)
+    { csvColIndex: 1, matchIndex: 14, winnerGroup: 'B' },  // 1B vs -> Match 15 (Winner B vs 3rd)
+    { csvColIndex: 2, matchIndex: 6, winnerGroup: 'D' },   // 1D vs -> Match 7 (Winner D vs 3rd)
+    { csvColIndex: 3, matchIndex: 0, winnerGroup: 'E' },   // 1E vs -> Match 1 (Winner E vs 3rd)
+    { csvColIndex: 4, matchIndex: 7, winnerGroup: 'G' },   // 1G vs -> Match 8 (Winner G vs 3rd)
+    { csvColIndex: 5, matchIndex: 1, winnerGroup: 'I' },   // 1I vs -> Match 2 (Winner I vs 3rd)
+    { csvColIndex: 6, matchIndex: 15, winnerGroup: 'K' },  // 1K vs -> Match 16 (Winner K vs 3rd)
+    { csvColIndex: 7, matchIndex: 12, winnerGroup: 'L' },  // 1L vs -> Match 13 (Winner L vs 3rd)
   ];
   
   // Fixed matches that don't depend on third-place teams
@@ -104,8 +103,8 @@ function parseCSVToLookupTable(csvPath) {
     // Create lookup key (sorted)
     const lookupKey = advancingGroups.sort().join('');
     
-    // Extract matchup values (columns 14-21, indices 13-20)
-    const matchupValues = columns.slice(13, 21).map(v => v.trim());
+    // Extract matchup values (columns 14-21, indices 14-21 in 0-indexed array)
+    const matchupValues = columns.slice(14, 22).map(v => v.trim());
     
     // Build the 16 matchups array
     const matchups = new Array(16);
@@ -135,19 +134,9 @@ function parseCSVToLookupTable(csvPath) {
     
     // Fill in remaining third-place matches using priority rules
     // Match 9: Winner C vs 3rd (priority: C/E/F/H/I)
+    // This is the only winner-vs-third match not specified in the CSV
     const getThirdPlaceForMatch9 = () => {
       const priority = ['C', 'E', 'F', 'H', 'I'];
-      for (const group of priority) {
-        if (advancingGroups.includes(group)) {
-          return group;
-        }
-      }
-      return null;
-    };
-    
-    // Match 12: Winner A vs 3rd (priority: E/H/I/J/K) - not in CSV, always determined by priority
-    const getThirdPlaceForMatch12 = () => {
-      const priority = ['E', 'H', 'I', 'J', 'K'];
       for (const group of priority) {
         if (advancingGroups.includes(group)) {
           return group;
@@ -162,15 +151,6 @@ function parseCSVToLookupTable(csvPath) {
       matchups[8] = {
         team1: { type: 'winner', group: 'C' },
         team2: { type: 'third', group: match9Third }
-      };
-    }
-    
-    // Set Match 12 (index 11) - Winner A vs 3rd (always determined by priority, not in CSV)
-    const match12Third = getThirdPlaceForMatch12();
-    if (match12Third && !matchups[11]) {
-      matchups[11] = {
-        team1: { type: 'winner', group: 'A' },
-        team2: { type: 'third', group: match12Third }
       };
     }
     

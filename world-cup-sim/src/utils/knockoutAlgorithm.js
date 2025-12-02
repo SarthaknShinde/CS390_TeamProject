@@ -146,10 +146,10 @@ function generateMatchupsFallback(advancingGroups, groupWinners, runnersUp, thir
     winner: null
   });
 
-  // Match 12: Winner Group A vs 3rd (E/H/I/J/K)
+  // Match 12: Winner Group A vs 3rd (varies by CSV - using fallback priority)
   roundOf32.push({
     team1: groupWinners['A'] || 'TBD',
-    team2: getThirdPlace(['E', 'H', 'I', 'J', 'K']) || 'TBD',
+    team2: getThirdPlace(['E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']) || 'TBD',
     winner: null
   });
 
@@ -167,10 +167,10 @@ function generateMatchupsFallback(advancingGroups, groupWinners, runnersUp, thir
     winner: null
   });
 
-  // Match 15: Winner Group J vs 3rd (E/F/G/I/J)
+  // Match 15: Winner Group B vs 3rd (varies by CSV - using fallback priority)
   roundOf32.push({
-    team1: groupWinners['J'] || 'TBD',
-    team2: getThirdPlace(['E', 'F', 'G', 'I', 'J']) || 'TBD',
+    team1: groupWinners['B'] || 'TBD',
+    team2: getThirdPlace(['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']) || 'TBD',
     winner: null
   });
 
