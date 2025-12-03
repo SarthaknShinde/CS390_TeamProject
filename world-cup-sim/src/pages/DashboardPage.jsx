@@ -278,6 +278,51 @@ function DashboardPage() {
     }
   };
 
+  // Navigate to betting odds page for a group
+  const handleGroupClick = (groupName) => {
+    const groupTeams = groups[groupName].teams;
+    if (groupTeams.length === 4) {
+      // Pass all teams to show all 6 matchups in the group
+      navigate('/betting-odds', {
+        state: {
+          type: 'group',
+          groupName: groupName,
+          allTeams: groupTeams.map(team => team.name),
+        },
+      });
+    }
+  };
+
+  // Navigate to betting odds page for a knockout matchup
+  const handleMatchupClick = (side, roundIndex, matchupIndex) => {
+    if (!knockoutBracket) return;
+    
+    let matchup;
+    if (side === 'final') {
+      matchup = knockoutBracket.final[matchupIndex];
+    } else {
+      matchup = knockoutBracket[side][roundIndex][matchupIndex];
+    }
+
+    if (matchup.team1 && matchup.team2) {
+      const roundNames = {
+        0: 'Round of 32',
+        1: 'Round of 16',
+        2: 'Quarterfinals',
+        3: 'Semifinals',
+      };
+      
+      navigate('/betting-odds', {
+        state: {
+          team1: matchup.team1,
+          team2: matchup.team2,
+          type: 'matchup',
+          round: roundNames[roundIndex] || 'Final',
+        },
+      });
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
@@ -322,7 +367,12 @@ function DashboardPage() {
             
             <div className="groups-grid">
               {Object.keys(groups).map((groupName) => (
-                <div key={groupName} className="group-card">
+                <div 
+                  key={groupName} 
+                  className="group-card clickable-group"
+                  onClick={() => handleGroupClick(groupName)}
+                  title="Click to view betting odds for this group"
+                >
                   <h3>Group {groupName}</h3>
                   <div className="group-teams">
                     {groups[groupName].teams.map((team, index) => (
@@ -333,6 +383,7 @@ function DashboardPage() {
                         onDragStart={(e) => handleDragStart(e, groupName, index)}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, groupName, index)}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <span className="position-number">{index + 1}.</span>
                         <span className="team-name">{team.name}</span>
@@ -426,12 +477,21 @@ function DashboardPage() {
                       <div className="round-matchups">
                         {round.map((matchup, matchupIndex) => (
                           <div key={matchupIndex} className="matchup-wrapper">
-                            <div className="matchup">
+                            <div 
+                              className={`matchup ${matchup.team1 && matchup.team2 ? 'clickable-matchup' : ''}`}
+                              onClick={() => {
+                                if (matchup.team1 && matchup.team2) {
+                                  handleMatchupClick('left', roundIndex, matchupIndex);
+                                }
+                              }}
+                              title={matchup.team1 && matchup.team2 ? "Click to view betting odds" : ""}
+                            >
                               <div
                                 className={`team ${!matchup.team1 ? 'empty' : ''} ${
                                   isBracketTeamClickable('left', roundIndex, matchupIndex) ? 'clickable' : ''
                                 } ${matchup.winner === matchup.team1 ? 'winner' : ''}`}
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   if (isBracketTeamClickable('left', roundIndex, matchupIndex)) {
                                     handleBracketTeamClick('left', roundIndex, matchupIndex, 'team1');
                                   }
@@ -444,7 +504,8 @@ function DashboardPage() {
                                 className={`team ${!matchup.team2 ? 'empty' : ''} ${
                                   isBracketTeamClickable('left', roundIndex, matchupIndex) ? 'clickable' : ''
                                 } ${matchup.winner === matchup.team2 ? 'winner' : ''}`}
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   if (isBracketTeamClickable('left', roundIndex, matchupIndex)) {
                                     handleBracketTeamClick('left', roundIndex, matchupIndex, 'team2');
                                   }
@@ -469,14 +530,23 @@ function DashboardPage() {
                 <div className="round-label">Final</div>
                 {knockoutBracket.final.map((matchup, matchupIndex) => (
                   <div key={matchupIndex} className="matchup-wrapper final-wrapper">
-                    <div className="matchup final-matchup">
+                    <div 
+                      className={`matchup final-matchup ${matchup.team1 && matchup.team2 ? 'clickable-matchup' : ''}`}
+                      onClick={() => {
+                        if (matchup.team1 && matchup.team2) {
+                          handleMatchupClick('final', 0, matchupIndex);
+                        }
+                      }}
+                      title={matchup.team1 && matchup.team2 ? "Click to view betting odds" : ""}
+                    >
                       <div
                         className={`team ${!matchup.team1 ? 'empty' : ''} ${
                           isBracketTeamClickable('final', 0, matchupIndex) ? 'clickable' : ''
                         } ${matchup.winner === matchup.team1 ? 'winner' : ''} ${
                           champion === matchup.team1 ? 'champion' : ''
                         }`}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           if (isBracketTeamClickable('final', 0, matchupIndex)) {
                             handleBracketTeamClick('final', 0, matchupIndex, 'team1');
                           }
@@ -491,7 +561,8 @@ function DashboardPage() {
                         } ${matchup.winner === matchup.team2 ? 'winner' : ''} ${
                           champion === matchup.team2 ? 'champion' : ''
                         }`}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           if (isBracketTeamClickable('final', 0, matchupIndex)) {
                             handleBracketTeamClick('final', 0, matchupIndex, 'team2');
                           }
@@ -529,12 +600,21 @@ function DashboardPage() {
                               {roundIndex < knockoutBracket.right.length - 1 && (
                                 <div className="connector connector-left"></div>
                               )}
-                              <div className="matchup">
+                              <div 
+                                className={`matchup ${matchup.team1 && matchup.team2 ? 'clickable-matchup' : ''}`}
+                                onClick={() => {
+                                  if (matchup.team1 && matchup.team2) {
+                                    handleMatchupClick('right', roundIndex, matchupIndex);
+                                  }
+                                }}
+                                title={matchup.team1 && matchup.team2 ? "Click to view betting odds" : ""}
+                              >
                                 <div
                                   className={`team ${!matchup.team1 ? 'empty' : ''} ${
                                     isBracketTeamClickable('right', roundIndex, matchupIndex) ? 'clickable' : ''
                                   } ${matchup.winner === matchup.team1 ? 'winner' : ''}`}
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     if (isBracketTeamClickable('right', roundIndex, matchupIndex)) {
                                       handleBracketTeamClick('right', roundIndex, matchupIndex, 'team1');
                                     }
@@ -547,7 +627,8 @@ function DashboardPage() {
                                   className={`team ${!matchup.team2 ? 'empty' : ''} ${
                                     isBracketTeamClickable('right', roundIndex, matchupIndex) ? 'clickable' : ''
                                   } ${matchup.winner === matchup.team2 ? 'winner' : ''}`}
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     if (isBracketTeamClickable('right', roundIndex, matchupIndex)) {
                                       handleBracketTeamClick('right', roundIndex, matchupIndex, 'team2');
                                     }
