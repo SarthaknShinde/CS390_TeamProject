@@ -1,11 +1,11 @@
-.dashboard-container {
+.simulator-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #0a1a2a, #003b5c);
   color: white;
   padding-bottom: 40px;
 }
 
-.dashboard-header {
+.simulator-header {
   backdrop-filter: blur(10px);
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
@@ -18,7 +18,7 @@
   gap: 15px;
 }
 
-.dashboard-header h1 {
+.simulator-header h1 {
   font-size: 28px;
   font-weight: 700;
   margin: 0;
@@ -28,6 +28,24 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.nav-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  border: 2px solid rgba(0, 200, 255, 0.5);
+  border-radius: 8px;
+  cursor: pointer;
+  background: rgba(0, 200, 255, 0.2);
+  color: white;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover {
+  background: rgba(0, 200, 255, 0.3);
+  border-color: rgba(0, 200, 255, 0.7);
+  transform: translateY(-2px);
 }
 
 .view-btn {
@@ -111,7 +129,7 @@
 
 .groups-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
   margin-bottom: 40px;
 }
@@ -129,34 +147,6 @@
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
-}
-
-.group-card.clickable-group {
-  cursor: pointer;
-  position: relative;
-}
-
-.group-card.clickable-group::after {
-  content: "📊 View Odds";
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 10px;
-  background: rgba(102, 126, 234, 0.8);
-  padding: 4px 8px;
-  border-radius: 6px;
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
-}
-
-.group-card.clickable-group:hover::after {
-  opacity: 1;
-}
-
-.group-card.clickable-group:hover {
-  border-color: rgba(102, 126, 234, 0.6);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .group-card h3 {
@@ -180,18 +170,8 @@
   padding: 12px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  cursor: grab;
   transition: all 0.2s;
   border: 2px solid transparent;
-}
-
-.group-team:active {
-  cursor: grabbing;
-}
-
-.group-team:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateX(5px);
 }
 
 .group-team.pot-1 {
@@ -232,14 +212,92 @@
   font-weight: 600;
 }
 
-.group-winner-prob {
-  font-size: 13px;
-  padding: 4px 10px;
-  background: rgba(102, 126, 234, 0.3);
-  border-radius: 6px;
+/* STANDINGS TABLE */
+.standings-table {
+  margin-top: 15px;
+  font-size: 12px;
+}
+
+.standings-header {
+  display: grid;
+  grid-template-columns: 2fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 0.7fr;
+  gap: 5px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 5px;
   font-weight: 700;
+  font-size: 11px;
+  text-align: center;
+}
+
+.standings-row {
+  display: grid;
+  grid-template-columns: 2fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 0.7fr;
+  gap: 5px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 5px;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+  text-align: center;
+  align-items: center;
+}
+
+.standings-row.qualified {
+  border-color: rgba(0, 255, 120, 0.6);
+  background: rgba(0, 255, 120, 0.15);
+  font-weight: 600;
+}
+
+.standings-row:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.team-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+
+.team-cell .position-number {
+  width: 20px;
+  font-size: 14px;
+}
+
+.team-cell .team-name {
+  font-size: 13px;
+  flex: 1;
+}
+
+.points-cell {
+  font-weight: 700;
+  font-size: 14px;
   color: #00c6ff;
-  border: 1px solid rgba(102, 126, 234, 0.5);
+}
+
+/* MATCHES SECTION */
+.matches-section {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.matches-section h4 {
+  font-size: 14px;
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.match-result {
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  margin-bottom: 5px;
+  font-size: 11px;
+  text-align: center;
 }
 
 /* THIRD PLACE RANKING STYLES */
@@ -268,20 +326,12 @@
   transition: all 0.2s;
   position: relative;
   border: 2px solid transparent;
-  cursor: move;
-  user-select: none;
 }
 
 .third-place-row:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.3);
   transform: translateX(4px);
-}
-
-.third-place-row.dragging {
-  opacity: 0.5;
-  border-color: rgba(102, 126, 234, 0.8);
-  background: rgba(102, 126, 234, 0.15);
 }
 
 .third-place-row.qualified {
@@ -325,34 +375,29 @@
   font-weight: 600;
 }
 
-.rank-controls {
+.team-stats {
   display: flex;
-  gap: 5px;
-}
-
-.rank-btn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 0.2s;
-  display: flex;
+  gap: 15px;
   align-items: center;
-  justify-content: center;
 }
 
-.rank-btn:hover:not(:disabled) {
-  background: rgba(0, 200, 255, 0.4);
-  transform: scale(1.1);
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
 }
 
-.rank-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+.stat-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #00c6ff;
 }
 
 .qualification-separator {
@@ -389,30 +434,11 @@
   border: 1px solid rgba(0, 255, 120, 0.3);
 }
 
-.cutoff-line {
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, #00ff78, transparent);
-  border-radius: 2px;
-}
-
-.cutoff-line::after {
-  content: attr(data-label);
-  position: absolute;
-  right: 10px;
-  top: -20px;
-  font-size: 12px;
-  color: #00ff78;
-  font-weight: 700;
-}
-
 /* ACTION SECTION */
 .action-section {
   text-align: center;
   margin-top: 30px;
+  margin-bottom: 30px;
 }
 
 .advance-btn {
@@ -431,6 +457,29 @@
 .advance-btn:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(0, 200, 255, 0.6);
+}
+
+.simulate-btn {
+  padding: 15px 40px;
+  font-size: 18px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #00ff78, #00c6ff);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(0, 255, 120, 0.4);
+}
+
+.simulate-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 255, 120, 0.6);
+}
+
+.simulate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* BRACKET STYLES */
@@ -584,33 +633,6 @@
   background: rgba(255, 255, 255, 0.12);
 }
 
-.matchup.clickable-matchup {
-  cursor: pointer;
-  position: relative;
-}
-
-.matchup.clickable-matchup::before {
-  content: "📊";
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  font-size: 14px;
-  opacity: 0;
-  transition: opacity 0.3s;
-  z-index: 10;
-}
-
-.matchup.clickable-matchup:hover::before {
-  opacity: 1;
-}
-
-.matchup.clickable-matchup:hover {
-  background: rgba(102, 126, 234, 0.2);
-  border: 2px solid rgba(102, 126, 234, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
 .final-matchup {
   min-width: 220px;
   background: rgba(255, 255, 255, 0.12);
@@ -639,19 +661,6 @@
   cursor: default;
 }
 
-.team.clickable {
-  cursor: pointer;
-  background: rgba(0, 200, 255, 0.2);
-  border-color: rgba(0, 200, 255, 0.5);
-}
-
-.team.clickable:hover {
-  background: rgba(0, 200, 255, 0.3);
-  border-color: rgba(0, 200, 255, 0.8);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 200, 255, 0.3);
-}
-
 .team.winner {
   background: rgba(0, 255, 120, 0.3);
   border-color: rgba(0, 255, 120, 0.6);
@@ -675,6 +684,14 @@
   50% {
     transform: scale(1.05);
   }
+}
+
+.match-score {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #00c6ff;
+  padding: 4px 0;
 }
 
 .vs {
@@ -797,21 +814,28 @@
 /* Responsive */
 @media (max-width: 1400px) {
   .groups-grid {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 }
 
 @media (max-width: 768px) {
-  .dashboard-header {
+  .simulator-header {
     flex-direction: column;
     align-items: flex-start;
   }
   
-  .dashboard-header h1 {
+  .simulator-header h1 {
     font-size: 24px;
   }
   
   .groups-grid {
     grid-template-columns: 1fr;
   }
+
+  .standings-header,
+  .standings-row {
+    grid-template-columns: 2fr 0.4fr 0.4fr 0.4fr 0.4fr 0.4fr 0.4fr 0.4fr 0.5fr;
+    font-size: 10px;
+  }
 }
+
