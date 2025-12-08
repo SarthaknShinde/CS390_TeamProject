@@ -133,15 +133,28 @@ function parseCSVToLookupTable(csvPath) {
     });
     
     // Fill in remaining third-place matches using priority rules
-    // Match 9: Winner C vs 3rd (priority: C/E/F/H/I)
+    // Match 9: Winner C vs 3rd (priority: E/F/H/I - exclude C itself!)
     // This is the only winner-vs-third match not specified in the CSV
     const getThirdPlaceForMatch9 = () => {
-      const priority = ['C', 'E', 'F', 'H', 'I'];
+      // IMPORTANT: A group's winner cannot play against its own third-place team
+      // So we exclude 'C' from the priority list
+      const priority = ['E', 'F', 'H', 'I'];
       for (const group of priority) {
         if (advancingGroups.includes(group)) {
           return group;
         }
       }
+      
+      // Edge case: If none of E, F, H, I advanced, Winner C must face
+      // one of the other advancing third-place teams.
+      // Try to find any advancing group except C itself
+      const fallbackGroups = ['A', 'B', 'D', 'G', 'J', 'K', 'L'];
+      for (const group of fallbackGroups) {
+        if (advancingGroups.includes(group)) {
+          return group;
+        }
+      }
+      
       return null;
     };
     
