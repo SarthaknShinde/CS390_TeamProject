@@ -40,17 +40,8 @@ function LoginPage() {
     }
   };
 
-  const handleAdminBypass = () => {
-    // Set a dummy token to bypass authentication
-    localStorage.setItem('jwt', 'admin-bypass-token');
-    navigate('/predictor');
-  };
-
   return (
     <div className="auth-container">
-      <button className="admin-bypass-btn" onClick={handleAdminBypass}>
-        Admin Bypass
-      </button>
       <div className="auth-card">
         <h2>Login</h2>
         <form onSubmit={handleSubmit}>
