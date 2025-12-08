@@ -16,6 +16,15 @@ function extractCountryName(teamString) {
   return cleaned;
 }
 
+// Helper function to extract flag emoji from team string
+function extractFlag(teamString) {
+  if (!teamString) return '';
+  
+  // Extract flag emoji (country flags or special flags like Scotland)
+  const flagMatch = teamString.match(/[\u{1F1E6}-\u{1F1FF}]{2}|🏴[󠁁-󠁿]*/gu);
+  return flagMatch ? flagMatch[0] : '';
+}
+
 // Helper function to format rank with proper ordinal suffix (1st, 2nd, 3rd, 4th, etc.)
 function formatRank(rank) {
   if (!rank || rank === null || rank === undefined) return '';
@@ -301,8 +310,9 @@ function BettingOddsPage() {
       <div className="odds-content">
         <div className="matchup-header">
           <div className="team-display team1">
-            <h2 className="team-name-large">{extractCountryName(odds?.team1 || team1)}</h2>
-            <p className="team-name-full">{odds?.team1 || team1}</p>
+            <h2 className="team-name-large">
+              {extractFlag(odds?.team1 || team1)} {extractCountryName(odds?.team1 || team1)}
+            </h2>
             {odds?.rankings?.team1?.rank ? (
               <div className="fifa-ranking">
                 <span className="ranking-label">FIFA Rank:</span>
@@ -322,8 +332,9 @@ function BettingOddsPage() {
             <span className="vs-text">VS</span>
           </div>
           <div className="team-display team2">
-            <h2 className="team-name-large">{extractCountryName(odds?.team2 || team2)}</h2>
-            <p className="team-name-full">{odds?.team2 || team2}</p>
+            <h2 className="team-name-large">
+              {extractFlag(odds?.team2 || team2)} {extractCountryName(odds?.team2 || team2)}
+            </h2>
             {odds?.rankings?.team2?.rank ? (
               <div className="fifa-ranking">
                 <span className="ranking-label">FIFA Rank:</span>
