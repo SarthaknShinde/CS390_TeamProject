@@ -47,7 +47,7 @@ function BettingOddsPage() {
   const [groupMatchups, setGroupMatchups] = useState([]);
 
   // Get team information from location state
-  const { team1, team2, type, groupName, allTeams } = location.state || {};
+  const { team1, team2, type, groupName, allTeams, returnPath, returnView } = location.state || {};
 
   useEffect(() => {
     if (type === 'group' && allTeams && allTeams.length === 4) {
@@ -147,7 +147,14 @@ function BettingOddsPage() {
   };
 
   const handleBack = () => {
-    navigate(-1); // Go back to previous page
+    if (returnPath) {
+      // Navigate to the specified path and set the view if provided
+      navigate(returnPath, { 
+        state: returnView ? { view: returnView } : {} 
+      });
+    } else {
+      navigate(-1); // Fallback to browser history
+    }
   };
 
   if (loading) {

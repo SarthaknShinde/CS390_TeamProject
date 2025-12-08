@@ -593,6 +593,14 @@ function SimulatorPage() {
       score2: null
     }];
 
+    const thirdPlacePlayoff = [{
+      team1: null,
+      team2: null,
+      winner: null,
+      score1: null,
+      score2: null
+    }];
+
     setKnockoutBracket({
       left: [
         roundOf32.slice(0, 8),
@@ -606,7 +614,8 @@ function SimulatorPage() {
         quarterfinals.slice(2, 4),
         semifinals.slice(1, 2)
       ],
-      final: final
+      final: final,
+      thirdPlacePlayoff: thirdPlacePlayoff
     });
 
     setCurrentView('bracket');
@@ -623,7 +632,8 @@ function SimulatorPage() {
       const newBracket = {
         left: knockoutBracket.left.map(round => round.map(matchup => ({ ...matchup }))),
         right: knockoutBracket.right.map(round => round.map(matchup => ({ ...matchup }))),
-        final: knockoutBracket.final.map(matchup => ({ ...matchup }))
+        final: knockoutBracket.final.map(matchup => ({ ...matchup })),
+        thirdPlacePlayoff: knockoutBracket.thirdPlacePlayoff ? knockoutBracket.thirdPlacePlayoff.map(matchup => ({ ...matchup })) : [{ team1: null, team2: null, winner: null, score1: null, score2: null }]
       };
 
       // Simulate Round of 32
@@ -642,6 +652,11 @@ function SimulatorPage() {
       await simulateRound(newBracket, 'left', 3);
       await simulateRound(newBracket, 'right', 3);
 
+      // Simulate Third Place Playoff
+      if (newBracket.thirdPlacePlayoff && newBracket.thirdPlacePlayoff[0].team1 && newBracket.thirdPlacePlayoff[0].team2) {
+        await simulateRound(newBracket, 'thirdPlacePlayoff', 0);
+      }
+
       // Simulate Final
       await simulateRound(newBracket, 'final', 0);
 
@@ -657,7 +672,7 @@ function SimulatorPage() {
   };
 
   const simulateRound = async (bracket, side, roundIndex) => {
-    const round = side === 'final' ? bracket.final : bracket[side][roundIndex];
+    const round = side === 'final' ? bracket.final : (side === 'thirdPlacePlayoff' ? bracket.thirdPlacePlayoff : bracket[side][roundIndex]);
     
     for (let i = 0; i < round.length; i++) {
       const matchup = round[i];
@@ -726,13 +741,32 @@ function SimulatorPage() {
           return;
         }
 
+        if (side === 'thirdPlacePlayoff') {
+          // Third place playoff winner is determined, no advancement needed
+          return;
+        }
+
         const nextRoundIndex = roundIndex + 1;
         if (nextRoundIndex >= bracket[side].length) {
-          // Advance to final
+          // This is the semifinal - winners go to final, losers go to third place playoff
+          // Winner goes to final
           const finalMatchup = bracket.final[0];
-          const position = side === 'left' ? 'team1' : 'team2';
-          if (!finalMatchup[position]) {
-            finalMatchup[position] = matchup.winner;
+          const finalPosition = side === 'left' ? 'team1' : 'team2';
+          if (!finalMatchup[finalPosition]) {
+            finalMatchup[finalPosition] = matchup.winner;
+          }
+          
+          // Loser goes to third place playoff
+          const losingTeam = matchup.team1 === matchup.winner ? matchup.team2 : matchup.team1;
+          if (losingTeam) {
+            if (!bracket.thirdPlacePlayoff) {
+              bracket.thirdPlacePlayoff = [{ team1: null, team2: null, winner: null, score1: null, score2: null }];
+            }
+            const thirdPlaceMatchup = bracket.thirdPlacePlayoff[0];
+            const thirdPlacePosition = side === 'left' ? 'team1' : 'team2';
+            if (!thirdPlaceMatchup[thirdPlacePosition]) {
+              thirdPlaceMatchup[thirdPlacePosition] = losingTeam;
+            }
           }
         } else {
           const nextMatchupIndex = Math.floor(i / 2);
@@ -1095,6 +1129,34 @@ function SimulatorPage() {
                     )}
                   </div>
                 ))}
+                
+                {/* Third Place Playoff */}
+                {knockoutBracket.thirdPlacePlayoff && knockoutBracket.thirdPlacePlayoff.length > 0 && (
+                  <div className="third-place-playoff-wrapper">
+                    <div className="round-label">3rd Place</div>
+                    {knockoutBracket.thirdPlacePlayoff.map((matchup, matchupIndex) => (
+                      <div key={matchupIndex} className="matchup-wrapper third-place-wrapper">
+                        <div className="matchup third-place-matchup">
+                          <div className={`team ${!matchup.team1 ? 'empty' : ''} ${matchup.winner === matchup.team1 ? 'winner set' : matchup.winner ? 'loser set' : matchup.team2 ? 'wait' : ''}`}>
+                            {matchup.team1 || 'TBD'}
+                          </div>
+                          {simulatedKnockout && matchup.score1 !== null && (
+                            <div className="match-score">
+                              {matchup.score1} - {matchup.score2}
+                              {matchup.isPenalties && (
+                                <span className="penalty-notation"> ({matchup.penaltyScore1}-{matchup.penaltyScore2} pens)</span>
+                              )}
+                            </div>
+                          )}
+                          <div className="vs">vs</div>
+                          <div className={`team ${!matchup.team2 ? 'empty' : ''} ${matchup.winner === matchup.team2 ? 'winner set' : matchup.winner ? 'loser set' : matchup.team1 ? 'wait' : ''}`}>
+                            {matchup.team2 || 'TBD'}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Right Half */}

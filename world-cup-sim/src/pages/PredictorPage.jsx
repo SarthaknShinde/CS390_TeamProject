@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { generateRoundOf32Matchups } from '../utils/knockoutAlgorithm';
 import api from '../api/api';
 import './PredictorPage.css';
@@ -111,14 +111,57 @@ function initializeGroups() {
 
 function PredictorPage() {
   const navigate = useNavigate();
-  const [groups, setGroups] = useState(() => initializeGroups());
-  const [thirdPlaceTeams, setThirdPlaceTeams] = useState([]);
-  const [knockoutBracket, setKnockoutBracket] = useState(null);
-  const [champion, setChampion] = useState(null);
+  const location = useLocation();
+  
+  // Load saved state from localStorage
+  const loadSavedState = () => {
+    try {
+      const saved = localStorage.getItem('predictorState');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          groups: parsed.groups || initializeGroups(),
+          thirdPlaceTeams: parsed.thirdPlaceTeams || [],
+          knockoutBracket: parsed.knockoutBracket || null,
+          champion: parsed.champion || null,
+          currentView: parsed.currentView || 'groups'
+        };
+      }
+    } catch (error) {
+      console.error('Error loading saved state:', error);
+    }
+    return {
+      groups: initializeGroups(),
+      thirdPlaceTeams: [],
+      knockoutBracket: null,
+      champion: null,
+      currentView: location.state?.view || 'groups'
+    };
+  };
+
+  const savedState = loadSavedState();
+  // Prioritize location.state.view when navigating back, otherwise use saved view
+  const initialView = location.state?.view || savedState.currentView;
+  const [groups, setGroups] = useState(savedState.groups);
+  const [thirdPlaceTeams, setThirdPlaceTeams] = useState(savedState.thirdPlaceTeams);
+  const [knockoutBracket, setKnockoutBracket] = useState(savedState.knockoutBracket);
+  const [champion, setChampion] = useState(savedState.champion);
   const [draggedTeam, setDraggedTeam] = useState(null);
-  const [currentView, setCurrentView] = useState('groups'); // 'groups', 'third-place', 'bracket'
+  const [currentView, setCurrentView] = useState(initialView);
   const [groupWinnerProbs, setGroupWinnerProbs] = useState({});
   const [draggedThirdPlaceIndex, setDraggedThirdPlaceIndex] = useState(null);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    const stateToSave = {
+      groups,
+      thirdPlaceTeams,
+      knockoutBracket,
+      champion,
+      currentView
+    };
+    localStorage.setItem('predictorState', JSON.stringify(stateToSave));
+  }, [groups, thirdPlaceTeams, knockoutBracket, champion, currentView]);
 
   // Fetch group winner probabilities when groups are loaded
   useEffect(() => {
@@ -160,6 +203,8 @@ function PredictorPage() {
     setKnockoutBracket(null);
     setChampion(null);
     setCurrentView('groups');
+    // Clear localStorage
+    localStorage.removeItem('predictorState');
   };
 
   // Drag and drop handlers for group stage
@@ -306,6 +351,12 @@ function PredictorPage() {
       winner: null
     }];
 
+    const thirdPlacePlayoff = [{
+      team1: null,
+      team2: null,
+      winner: null
+    }];
+
     setKnockoutBracket({
       left: [
         roundOf32.slice(0, 8),
@@ -319,7 +370,8 @@ function PredictorPage() {
         quarterfinals.slice(2, 4),
         semifinals.slice(1, 2)
       ],
-      final: final
+      final: final,
+      thirdPlacePlayoff: thirdPlacePlayoff
     });
 
     setCurrentView('bracket');
@@ -332,7 +384,8 @@ function PredictorPage() {
     const newBracket = {
       left: knockoutBracket.left.map(round => round.map(matchup => ({ ...matchup }))),
       right: knockoutBracket.right.map(round => round.map(matchup => ({ ...matchup }))),
-      final: knockoutBracket.final.map(matchup => ({ ...matchup }))
+      final: knockoutBracket.final.map(matchup => ({ ...matchup })),
+      thirdPlacePlayoff: knockoutBracket.thirdPlacePlayoff ? knockoutBracket.thirdPlacePlayoff.map(matchup => ({ ...matchup })) : [{ team1: null, team2: null, winner: null }]
     };
 
     let matchup;
@@ -349,6 +402,10 @@ function PredictorPage() {
         matchup.winner = selectedTeam;
         setChampion(selectedTeam);
       }
+    } else if (side === 'thirdPlacePlayoff') {
+      if (matchup.team1 && matchup.team2) {
+        matchup.winner = selectedTeam;
+      }
     } else if (roundIndex === 0) {
       matchup.winner = selectedTeam;
       advanceTeamInBracket(newBracket, side, roundIndex, matchupIndex, selectedTeam);
@@ -363,15 +420,35 @@ function PredictorPage() {
   };
 
   const advanceTeamInBracket = (newBracket, side, currentRoundIndex, currentMatchupIndex, team) => {
-    if (side === 'final') return;
+    if (side === 'final' || side === 'thirdPlacePlayoff') return;
 
     const nextRoundIndex = currentRoundIndex + 1;
     
     if (nextRoundIndex >= newBracket[side].length) {
-      const finalMatchup = newBracket.final[0];
-      const position = side === 'left' ? 'team1' : 'team2';
-      if (!finalMatchup[position]) {
-        finalMatchup[position] = team;
+      // This is the semifinal - winners go to final, losers go to third place playoff
+      const matchup = newBracket[side][currentRoundIndex][currentMatchupIndex];
+      const isWinner = matchup.winner === team;
+      
+      if (isWinner) {
+        // Winner goes to final
+        const finalMatchup = newBracket.final[0];
+        const finalPosition = side === 'left' ? 'team1' : 'team2';
+        if (!finalMatchup[finalPosition]) {
+          finalMatchup[finalPosition] = team;
+        }
+        
+        // Loser goes to third place playoff
+        const losingTeam = matchup.team1 === team ? matchup.team2 : matchup.team1;
+        if (losingTeam) {
+          if (!newBracket.thirdPlacePlayoff) {
+            newBracket.thirdPlacePlayoff = [{ team1: null, team2: null, winner: null }];
+          }
+          const thirdPlaceMatchup = newBracket.thirdPlacePlayoff[0];
+          const thirdPlacePosition = side === 'left' ? 'team1' : 'team2';
+          if (!thirdPlaceMatchup[thirdPlacePosition]) {
+            thirdPlaceMatchup[thirdPlacePosition] = losingTeam;
+          }
+        }
       }
     } else {
       const nextMatchupIndex = Math.floor(currentMatchupIndex / 2);
@@ -390,11 +467,14 @@ function PredictorPage() {
     let matchup;
     if (side === 'final') {
       matchup = knockoutBracket.final[matchupIndex];
+    } else if (side === 'thirdPlacePlayoff') {
+      matchup = knockoutBracket.thirdPlacePlayoff ? knockoutBracket.thirdPlacePlayoff[matchupIndex] : null;
+      if (!matchup) return false;
     } else {
       matchup = knockoutBracket[side][roundIndex][matchupIndex];
     }
     
-    if (side === 'final') {
+    if (side === 'final' || side === 'thirdPlacePlayoff') {
       return matchup.team1 && matchup.team2 && matchup.winner === null;
     } else if (roundIndex === 0) {
       return matchup.winner === null;
@@ -413,6 +493,8 @@ function PredictorPage() {
           type: 'group',
           groupName: groupName,
           allTeams: groupTeams.map(team => team.name),
+          returnPath: '/predictor',
+          returnView: 'groups',
         },
       });
     }
@@ -425,6 +507,9 @@ function PredictorPage() {
     let matchup;
     if (side === 'final') {
       matchup = knockoutBracket.final[matchupIndex];
+    } else if (side === 'thirdPlacePlayoff') {
+      matchup = knockoutBracket.thirdPlacePlayoff ? knockoutBracket.thirdPlacePlayoff[matchupIndex] : null;
+      if (!matchup) return;
     } else {
       matchup = knockoutBracket[side][roundIndex][matchupIndex];
     }
@@ -442,7 +527,9 @@ function PredictorPage() {
           team1: matchup.team1,
           team2: matchup.team2,
           type: 'matchup',
-          round: roundNames[roundIndex] || 'Final',
+          round: side === 'thirdPlacePlayoff' ? 'Third Place Playoff' : (roundNames[roundIndex] || 'Final'),
+          returnPath: '/predictor',
+          returnView: 'bracket',
         },
       });
     }
@@ -697,7 +784,7 @@ function PredictorPage() {
                       <div
                         className={`team ${!matchup.team1 ? 'empty' : ''} ${
                           isBracketTeamClickable('final', 0, matchupIndex) ? 'clickable' : ''
-                        } ${matchup.winner === matchup.team1 ? 'winner' : ''} ${
+                        } ${matchup.winner === matchup.team1 ? 'winner set' : matchup.winner ? 'loser set' : matchup.team2 ? 'wait' : ''} ${
                           champion === matchup.team1 ? 'champion' : ''
                         }`}
                         onClick={(e) => {
@@ -713,7 +800,7 @@ function PredictorPage() {
                       <div
                         className={`team ${!matchup.team2 ? 'empty' : ''} ${
                           isBracketTeamClickable('final', 0, matchupIndex) ? 'clickable' : ''
-                        } ${matchup.winner === matchup.team2 ? 'winner' : ''} ${
+                        } ${matchup.winner === matchup.team2 ? 'winner set' : matchup.winner ? 'loser set' : matchup.team1 ? 'wait' : ''} ${
                           champion === matchup.team2 ? 'champion' : ''
                         }`}
                         onClick={(e) => {
@@ -733,6 +820,54 @@ function PredictorPage() {
                     )}
                   </div>
                 ))}
+                
+                {/* Third Place Playoff */}
+                {knockoutBracket.thirdPlacePlayoff && knockoutBracket.thirdPlacePlayoff.length > 0 && (
+                  <div className="third-place-playoff-wrapper">
+                    <div className="round-label">3rd Place</div>
+                    {knockoutBracket.thirdPlacePlayoff.map((matchup, matchupIndex) => (
+                      <div key={matchupIndex} className="matchup-wrapper third-place-wrapper">
+                        <div 
+                          className={`matchup third-place-matchup ${matchup.team1 && matchup.team2 ? 'clickable-matchup' : ''}`}
+                          onClick={() => {
+                            if (matchup.team1 && matchup.team2) {
+                              handleMatchupClick('thirdPlacePlayoff', 0, matchupIndex);
+                            }
+                          }}
+                          title={matchup.team1 && matchup.team2 ? "Click to view betting odds" : ""}
+                        >
+                          <div
+                            className={`team ${!matchup.team1 ? 'empty' : ''} ${
+                              isBracketTeamClickable('thirdPlacePlayoff', 0, matchupIndex) ? 'clickable' : ''
+                            } ${matchup.winner === matchup.team1 ? 'winner set' : matchup.winner ? 'loser set' : matchup.team2 ? 'wait' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isBracketTeamClickable('thirdPlacePlayoff', 0, matchupIndex)) {
+                                handleBracketTeamClick('thirdPlacePlayoff', 0, matchupIndex, 'team1');
+                              }
+                            }}
+                          >
+                            {matchup.team1 || 'TBD'}
+                          </div>
+                          <div className="vs">vs</div>
+                          <div
+                            className={`team ${!matchup.team2 ? 'empty' : ''} ${
+                              isBracketTeamClickable('thirdPlacePlayoff', 0, matchupIndex) ? 'clickable' : ''
+                            } ${matchup.winner === matchup.team2 ? 'winner set' : matchup.winner ? 'loser set' : matchup.team1 ? 'wait' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isBracketTeamClickable('thirdPlacePlayoff', 0, matchupIndex)) {
+                                handleBracketTeamClick('thirdPlacePlayoff', 0, matchupIndex, 'team2');
+                              }
+                            }}
+                          >
+                            {matchup.team2 || 'TBD'}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Right Half */}
