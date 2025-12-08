@@ -119,6 +119,34 @@ function extractCountryName(teamString) {
   return cleaned;
 }
 
+// Generate a realistic number of goals with weighted probability
+// Most games have 1-3 goals, but occasionally we see 4-7 goal thrillers
+function generateGoals(isWinner = false, probStrength = 0.5) {
+  const rand = Math.random();
+  
+  if (isWinner) {
+    // Winner's goals - weighted toward 1-3, but can go higher
+    // Stronger teams (higher probStrength) more likely to score more
+    const strengthBonus = (probStrength - 0.5) * 2; // -1 to 1 range
+    
+    if (rand < 0.35) return 1;
+    if (rand < 0.60) return 2;
+    if (rand < 0.78) return 3;
+    if (rand < 0.88 + strengthBonus * 0.05) return 4;
+    if (rand < 0.95 + strengthBonus * 0.03) return 5;
+    if (rand < 0.98 + strengthBonus * 0.01) return 6;
+    return 7; // Rare, but happens (like Germany 7-1 Brazil)
+  } else {
+    // Loser's goals - usually 0-2, occasionally more
+    if (rand < 0.40) return 0;
+    if (rand < 0.70) return 1;
+    if (rand < 0.88) return 2;
+    if (rand < 0.95) return 3;
+    if (rand < 0.98) return 4;
+    return 5; // Very rare high-scoring losses
+  }
+}
+
 // Generate a realistic score based on probabilities
 function generateScore(team1Prob, team2Prob, drawProb, isKnockout = false) {
   const random = Math.random();
@@ -133,23 +161,68 @@ function generateScore(team1Prob, team2Prob, drawProb, isKnockout = false) {
     
     if (random < adjustedTeam1Prob) {
       // Team 1 wins in regular/extra time
-      const goals1 = Math.floor(Math.random() * 3) + 1; // 1-3 goals
-      const goals2 = Math.floor(Math.random() * goals1); // Less than team1
-      return { team1: goals1, team2: goals2, isDraw: false, isPenalties: false };
+      const goals1 = generateGoals(true, team1Prob);
+      const goals2 = generateGoals(false, team2Prob);
+      // Ensure team1 actually wins
+      const actualGoals2 = goals2 >= goals1 ? goals1 - 1 : goals2;
+      return { team1: goals1, team2: Math.max(0, actualGoals2), isDraw: false, isPenalties: false };
     } else if (random < adjustedTeam1Prob + adjustedTeam2Prob) {
       // Team 2 wins in regular/extra time
-      const goals2 = Math.floor(Math.random() * 3) + 1;
-      const goals1 = Math.floor(Math.random() * goals2);
-      return { team1: goals1, team2: goals2, isDraw: false, isPenalties: false };
+      const goals2 = generateGoals(true, team2Prob);
+      const goals1 = generateGoals(false, team1Prob);
+      // Ensure team2 actually wins
+      const actualGoals1 = goals1 >= goals2 ? goals2 - 1 : goals1;
+      return { team1: Math.max(0, actualGoals1), team2: goals2, isDraw: false, isPenalties: false };
     } else {
       // Goes to penalties (draw after extra time)
-      // Generate a realistic draw score (0-0, 1-1, 2-2)
-      const drawScore = Math.floor(Math.random() * 3); // 0, 1, or 2
+      // Generate a realistic draw score (0-0, 1-1, 2-2, rarely 3-3)
+      const drawRand = Math.random();
+      const drawScore = drawRand < 0.40 ? 0 : drawRand < 0.70 ? 1 : drawRand < 0.90 ? 2 : 3;
       
-      // Generate penalty shootout score (3-5 goals each, winner has more)
+      // Generate realistic penalty shootout score
+      // Penalty shootouts alternate, and the maximum difference is limited
+      // Common scores: 3-2, 4-3, 5-4, 4-2, 5-3, 3-1, 4-1, 3-0 (very rare)
       const penaltyWinner = Math.random() < team1Prob / (team1Prob + team2Prob) ? 1 : 2;
-      const winnerPens = Math.floor(Math.random() * 3) + 3; // 3-5 penalties
-      const loserPens = Math.floor(Math.random() * winnerPens); // Less than winner
+      
+      // Generate realistic penalty shootout result
+      // Most shootouts are close (3-2, 4-3, 5-4), some have moderate differences (4-2, 5-3)
+      // Large differences (3-1, 4-1, 3-0) are rare
+      const shootoutRand = Math.random();
+      let winnerPens, loserPens;
+      
+      if (shootoutRand < 0.35) {
+        // Close shootout: 3-2 (most common)
+        winnerPens = 3;
+        loserPens = 2;
+      } else if (shootoutRand < 0.55) {
+        // Close shootout: 4-3
+        winnerPens = 4;
+        loserPens = 3;
+      } else if (shootoutRand < 0.70) {
+        // Close shootout: 5-4
+        winnerPens = 5;
+        loserPens = 4;
+      } else if (shootoutRand < 0.82) {
+        // Moderate difference: 4-2
+        winnerPens = 4;
+        loserPens = 2;
+      } else if (shootoutRand < 0.90) {
+        // Moderate difference: 5-3
+        winnerPens = 5;
+        loserPens = 3;
+      } else if (shootoutRand < 0.96) {
+        // Larger difference: 3-1
+        winnerPens = 3;
+        loserPens = 1;
+      } else if (shootoutRand < 0.99) {
+        // Larger difference: 4-1
+        winnerPens = 4;
+        loserPens = 1;
+      } else {
+        // Very rare: 3-0 (one team misses all first 3)
+        winnerPens = 3;
+        loserPens = 0;
+      }
       
       return { 
         team1: drawScore, 
@@ -165,17 +238,29 @@ function generateScore(team1Prob, team2Prob, drawProb, isKnockout = false) {
     // Group stage: can have draws
     if (random < team1Prob) {
       // Team 1 wins
-      const goals1 = Math.floor(Math.random() * 3) + 1;
-      const goals2 = Math.floor(Math.random() * goals1);
-      return { team1: goals1, team2: goals2, isDraw: false };
+      const goals1 = generateGoals(true, team1Prob);
+      const goals2 = generateGoals(false, team2Prob);
+      // Ensure team1 actually wins
+      const actualGoals2 = goals2 >= goals1 ? goals1 - 1 : goals2;
+      return { team1: goals1, team2: Math.max(0, actualGoals2), isDraw: false };
     } else if (random < team1Prob + team2Prob) {
       // Team 2 wins
-      const goals2 = Math.floor(Math.random() * 3) + 1;
-      const goals1 = Math.floor(Math.random() * goals2);
-      return { team1: goals1, team2: goals2, isDraw: false };
+      const goals2 = generateGoals(true, team2Prob);
+      const goals1 = generateGoals(false, team1Prob);
+      // Ensure team2 actually wins
+      const actualGoals1 = goals1 >= goals2 ? goals2 - 1 : goals1;
+      return { team1: Math.max(0, actualGoals1), team2: goals2, isDraw: false };
     } else {
-      // Draw
-      const goals = Math.floor(Math.random() * 3); // 0-2 goals each
+      // Draw - both teams score the same
+      const drawRand = Math.random();
+      // Draws are usually low scoring: 0-0, 1-1, 2-2, rarely 3-3 or higher
+      let goals;
+      if (drawRand < 0.35) goals = 0;
+      else if (drawRand < 0.65) goals = 1;
+      else if (drawRand < 0.85) goals = 2;
+      else if (drawRand < 0.95) goals = 3;
+      else goals = 4; // Very rare 4-4 or higher
+      
       return { team1: goals, team2: goals, isDraw: true };
     }
   }
