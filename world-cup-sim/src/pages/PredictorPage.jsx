@@ -639,7 +639,10 @@ function PredictorPage() {
   return (
     <div className="predictor-container">
       <header className="predictor-header">
-        <h1>World Cup 2026 Predictor</h1>
+        <div className="header-title-section">
+          <img src="/main.png" alt="World Cup 2026 Simulator" className="header-logo" />
+          <h1>World Cup 2026 Predictor</h1>
+        </div>
         <div className="header-actions">
           <button
             onClick={() => navigate('/simulator')}

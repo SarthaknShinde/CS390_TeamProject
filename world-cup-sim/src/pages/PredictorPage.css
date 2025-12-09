@@ -18,6 +18,18 @@
   gap: 15px;
 }
 
+.header-title-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.header-logo {
+  height: 50px;
+  width: auto;
+  object-fit: contain;
+}
+
 .predictor-header h1 {
   font-size: 28px;
   font-weight: 700;

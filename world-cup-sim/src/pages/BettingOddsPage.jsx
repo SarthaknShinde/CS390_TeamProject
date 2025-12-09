@@ -181,7 +181,10 @@ function BettingOddsPage() {
     return (
       <div className="betting-odds-container">
         <header className="odds-header">
-          <h1>Betting Odds</h1>
+          <div className="header-title-section">
+            <img src="/main.png" alt="World Cup 2026 Simulator" className="header-logo" />
+            <h1>Betting Odds</h1>
+          </div>
           <button onClick={handleBack} className="back-btn">
             ← Back
           </button>
@@ -197,8 +200,13 @@ function BettingOddsPage() {
       <div className="betting-odds-container">
         <header className="odds-header">
           <div className="header-content">
-            <h1>Group {groupName} - Betting Odds</h1>
-            <p className="header-subtitle">All matchups within the group</p>
+            <div className="header-title-section">
+              <img src="/main.png" alt="World Cup 2026 Simulator" className="header-logo" />
+              <div>
+                <h1>Group {groupName} - Betting Odds</h1>
+                <p className="header-subtitle">All matchups within the group</p>
+              </div>
+            </div>
           </div>
           <button onClick={handleBack} className="back-btn">
             ← Back
@@ -299,8 +307,13 @@ function BettingOddsPage() {
     <div className="betting-odds-container">
       <header className="odds-header">
         <div className="header-content">
-          <h1>Betting Odds</h1>
-          {groupName && <p className="header-subtitle">Group {groupName}</p>}
+          <div className="header-title-section">
+            <img src="/main.png" alt="World Cup 2026 Simulator" className="header-logo" />
+            <div>
+              <h1>Betting Odds</h1>
+              {groupName && <p className="header-subtitle">Group {groupName}</p>}
+            </div>
+          </div>
         </div>
         <button onClick={handleBack} className="back-btn">
           ← Back

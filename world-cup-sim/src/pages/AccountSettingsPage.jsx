@@ -92,6 +92,9 @@ function AccountSettingsPage() {
         <span className="back-text">Back</span>
       </Link>
       <div className="account-settings-card">
+        <div className="auth-logo-container">
+          <img src="/main.png" alt="World Cup 2026 Simulator" className="auth-logo" />
+        </div>
         <div className="account-settings-header">
           <h2>Account Settings</h2>
         </div>
