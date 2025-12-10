@@ -234,6 +234,6 @@ The application uses a modern design inspired by the template:
 - API base URL can be changed in `src/api/api.js`
 - All protected routes check for JWT token in `localStorage`
 
-Deployment Links
-Front End: https://cs390teamprojectfinalversion.vercel.app
+Deployment Links <br>
+Front End: https://worldcupbracketpredictor.vercel.app <br>
 Back End: https://cs390-teamproject.onrender.com 
