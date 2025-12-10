@@ -388,6 +388,10 @@ function SimulatorPage() {
   const [simulatedGroups, setSimulatedGroups] = useState(false);
   const [simulatedKnockout, setSimulatedKnockout] = useState(false);
 
+  const handleAccount = () => {
+    navigate('/account-settings');
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('jwt');
     navigate('/login');
@@ -944,6 +948,9 @@ function SimulatorPage() {
           )}
           <button onClick={handleReset} className="reset-btn">
             Reset
+          </button>
+          <button onClick={handleAccount} className="account-btn">
+            My Account
           </button>
           <button onClick={handleLogout} className="logout-btn">
             Logout

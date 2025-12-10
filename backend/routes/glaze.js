@@ -10,8 +10,9 @@ const router = express.Router();
 async function generateScript(bracket) {
     console.log('Generating glaze script with Gemini');
     try {
+        const bracketString = JSON.stringify(bracket, null, 2);
         const prompt = "Here is the proposed winner's bracket for the World Cup 2026.\n" 
-            + bracket + 
+            + bracketString + 
             "\nGenerate a voiceover script that greatly praises this proposed bracket. Your output must contain only spoken dialogue and no sound effects, headings, titles, or stage directions. The script must specifically and enthusiastically cover the following: \n" +
             "1.  The excitement and potential upsets of the **Round of 32** matchups.\n" +
             "2.  The high-stakes rivalries in the **Round of 16** matchups.\n" +
@@ -34,12 +35,23 @@ async function generateScript(bracket) {
             ]
         }
         const response = await axios.post(url,data,{headers})
+        
+        // Check if response structure is valid
+        if (!response.data || !response.data.candidates || !response.data.candidates[0]) {
+            throw new Error('Invalid response from Gemini API');
+        }
+        
         const script = response.data.candidates[0].content.parts[0].text;
+        if (!script) {
+            throw new Error('No script text in API response');
+        }
+        
         console.log('Glaze script generated');
         console.log(`Script length: ${script.length} characters`);
         return script;
     } catch (error) {
-        throw new Error('Failed to generate podcast script');
+        console.error('Error generating script:', error.response?.data || error.message);
+        throw new Error(`Failed to generate podcast script: ${error.message}`);
     }
 }
 async function generateAudio(text) {
@@ -60,10 +72,12 @@ async function generateAudio(text) {
             }
         };
         const response = await axios.post(url, data, { headers, responseType: 'arraybuffer' });
-        return filePath;
+        // Return the audio buffer (not implemented in current route, but keeping for future use)
+        return response.data;
 
     } catch (error) {
-        throw new Error('Failed to generate audio');
+        console.error('Error generating audio:', error.response?.data || error.message);
+        throw new Error(`Failed to generate audio: ${error.message}`);
     }
 }
 
@@ -79,15 +93,14 @@ async function generateGlaze(bracket){
         }
         return {
             success: true,
-            //articlesCount: articles.length,
             script: script,
             scriptLength: script.length,
             audioFile: audioFilePath
         };
 
     } catch (error) {
-        console.error('Error:', error.message);
-        process.exit(1);
+        console.error('Error generating glaze:', error.message);
+        throw error; // Re-throw instead of crashing the server
     }
 }
 
@@ -95,16 +108,21 @@ async function generateGlaze(bracket){
 // GLAZE
 router.post('/bracket', async (req, res) => {
   try {
-    const body = req.body;
-    console.log(JSON.stringify(body));
+    const { bracket } = req.body;
+    if (!bracket) {
+      return res.status(400).json({ message: 'Bracket data is required' });
+    }
+    
+    console.log('Received bracket data');
 
-    // Create token
-    const script = await generateScript(body);
+    // Generate script from bracket
+    const script = await generateScript(bracket);
 
     res.json({ script });
 
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error in glaze route:', err);
+    res.status(500).json({ message: err.message || 'Server error' });
   }
 });
 

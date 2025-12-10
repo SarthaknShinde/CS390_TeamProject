@@ -466,7 +466,11 @@ function PredictorPage() {
 
   // Bracket team click handler (from previous implementation)
   const handleBracketTeamClick = (side, roundIndex, matchupIndex, teamPosition) => {
-    if (champion || !knockoutBracket) return;
+    if (!knockoutBracket) return;
+    
+    // Allow third place playoff to be clickable even if champion is selected
+    // But prevent other rounds from being clickable if champion exists
+    if (champion && side !== 'thirdPlacePlayoff') return;
 
     const newBracket = {
       left: knockoutBracket.left.map(round => round.map(matchup => ({ ...matchup }))),
@@ -551,19 +555,26 @@ function PredictorPage() {
   };
 
   const isBracketTeamClickable = (side, roundIndex, matchupIndex) => {
-    if (champion || !knockoutBracket) return false;
+    if (!knockoutBracket) return false;
+    
+    // Third place playoff should be clickable independently of champion
+    if (side === 'thirdPlacePlayoff') {
+      const matchup = knockoutBracket.thirdPlacePlayoff ? knockoutBracket.thirdPlacePlayoff[matchupIndex] : null;
+      if (!matchup) return false;
+      return matchup.team1 && matchup.team2 && matchup.winner === null;
+    }
+    
+    // Final and other rounds should not be clickable if champion is selected
+    if (champion) return false;
     
     let matchup;
     if (side === 'final') {
       matchup = knockoutBracket.final[matchupIndex];
-    } else if (side === 'thirdPlacePlayoff') {
-      matchup = knockoutBracket.thirdPlacePlayoff ? knockoutBracket.thirdPlacePlayoff[matchupIndex] : null;
-      if (!matchup) return false;
     } else {
       matchup = knockoutBracket[side][roundIndex][matchupIndex];
     }
     
-    if (side === 'final' || side === 'thirdPlacePlayoff') {
+    if (side === 'final') {
       return matchup.team1 && matchup.team2 && matchup.winner === null;
     } else if (roundIndex === 0) {
       return matchup.winner === null;

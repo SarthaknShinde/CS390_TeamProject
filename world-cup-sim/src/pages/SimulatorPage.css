@@ -98,6 +98,22 @@
   background: rgba(255, 200, 0, 0.5);
 }
 
+.account-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: rgba(0, 200, 255, 0.3);
+  color: white;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.account-btn:hover {
+  background: rgba(0, 200, 255, 0.5);
+}
+
 .logout-btn {
   padding: 8px 16px;
   font-size: 14px;
